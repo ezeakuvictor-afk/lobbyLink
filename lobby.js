@@ -8,32 +8,30 @@ import {
     onDisconnect, get, push 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// ==========================================
-// FIREBASE INIT
-// ==========================================
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ==========================================
-// GET USER
+// USER
 // ==========================================
 const savedUser = localStorage.getItem('lobbyLink_user');
 if (!savedUser) window.location.href = 'index.html';
 const user = JSON.parse(savedUser);
 
 // ==========================================
-// UI REFERENCES
+// UI
 // ==========================================
 const findBtn = document.getElementById('findBtn');
+const findBtnText = document.getElementById('findBtnText');
 const actionHint = document.getElementById('actionHint');
 const noTeamModal = document.getElementById('noTeamModal');
 const searchingModal = document.getElementById('searchingModal');
 const tryAgainBtn = document.getElementById('tryAgainBtn');
 const cancelSearchBtn = document.getElementById('cancelSearchBtn');
 const liveCountEl = document.getElementById('liveCount');
+const counterLabel = document.getElementById('counterLabel');
 const searchRoomPlayers = document.getElementById('searchRoomPlayers');
 
-// Fill header & profile
 document.getElementById('userName').textContent = user.username;
 document.getElementById('userAvatar').textContent = user.username[0].toUpperCase();
 document.getElementById('userAvatar').style.background = user.avatarColor;
@@ -50,6 +48,9 @@ let currentRoomId = null;
 let heartbeatInterval = null;
 let isSearching = false;
 let roomListenerUnsubscribe = null;
+let graceTimer = null;
+let liveCount = 0;
+const GRACE_PERIOD_MS = 5000;
 
 // ==========================================
 // HEARTBEAT
@@ -79,47 +80,36 @@ function stopHeartbeat() {
 startHeartbeat();
 
 // ==========================================
-// LIVE PLAYER COUNTER
+// LIVE COUNTER + SMART BUTTON
 // ==========================================
 onValue(ref(db, 'live_players'), (snapshot) => {
     const now = Date.now();
-    let liveCount = 0;
+    liveCount = 0;
     snapshot.forEach((child) => {
         const p = child.val();
         if (now - p.lastActive < 15000 && !p.roomId) liveCount++;
     });
+
     liveCountEl.textContent = liveCount;
+    counterLabel.textContent = liveCount === 1 ? 'active player' : 'active players';
+
+    // Enable the button only when 2+ players are active
+    if (liveCount >= 2) {
+        findBtn.disabled = false;
+        findBtnText.textContent = 'FIND TEAMMATES';
+        actionHint.textContent = `${liveCount} players online. Tap to start the queue.`;
+    } else {
+        findBtn.disabled = true;
+        findBtnText.textContent = 'WAITING FOR PLAYERS';
+        actionHint.textContent = 'Waiting for another player to come online...';
+    }
 });
 
 // ==========================================
-// STRICT CLEANUP: Delete stale rooms
-// ==========================================
-// Runs once on load. Kills any room older than 5 minutes that has 0 players.
-async function cleanupStaleRooms() {
-    const snap = await get(ref(db, 'rooms'));
-    if (!snap.exists()) return;
-
-    const now = Date.now();
-    const FIVE_MINUTES = 5 * 60 * 1000;
-
-    snap.forEach((child) => {
-        const room = child.val();
-        const playerCount = room.players ? Object.keys(room.players).length : 0;
-        const createdAt = room.createdAt || 0;
-
-        if (playerCount === 0 && (now - createdAt) > FIVE_MINUTES) {
-            remove(ref(db, `rooms/${child.key}`));
-            console.log("Cleaned stale room:", child.key);
-        }
-    });
-}
-cleanupStaleRooms();
-
-// ==========================================
-// FIND TEAMMATES BUTTON
+// FIND BUTTON
 // ==========================================
 findBtn.addEventListener('click', async () => {
-    if (isSearching) return;
+    if (isSearching || liveCount < 2) return;
     isSearching = true;
     findBtn.disabled = true;
     await findOrCreateRoom();
@@ -129,8 +119,7 @@ findBtn.addEventListener('click', async () => {
 // MATCHMAKING
 // ==========================================
 async function findOrCreateRoom() {
-    const roomsRef = ref(db, 'rooms');
-    const snapshot = await get(roomsRef);
+    const snapshot = await get(ref(db, 'rooms'));
 
     let foundRoomId = null;
     let foundRoomData = null;
@@ -153,12 +142,12 @@ async function findOrCreateRoom() {
     if (foundRoomId) {
         await joinRoom(foundRoomId, foundRoomData);
     } else {
-        await createRoom();
+        await createRoomWithGrace();
     }
 }
 
 // ==========================================
-// JOIN EXISTING ROOM
+// JOIN
 // ==========================================
 async function joinRoom(roomId, roomData) {
     const playerCount = Object.keys(roomData.players || {}).length;
@@ -167,7 +156,8 @@ async function joinRoom(roomId, roomData) {
         uid: user.uid,
         rank: user.rank,
         avatarColor: user.avatarColor,
-        joinedAt: Date.now()
+        joinedAt: Date.now(),
+        lastActive: Date.now()
     });
 
     currentRoomId = roomId;
@@ -181,9 +171,9 @@ async function joinRoom(roomId, roomData) {
 }
 
 // ==========================================
-// CREATE A NEW ROOM
+// CREATE WITH GRACE
 // ==========================================
-async function createRoom() {
+async function createRoomWithGrace() {
     const newRoomRef = push(ref(db, 'rooms'));
     const roomId = newRoomRef.key;
 
@@ -195,7 +185,8 @@ async function createRoom() {
                 uid: user.uid,
                 rank: user.rank,
                 avatarColor: user.avatarColor,
-                joinedAt: Date.now()
+                joinedAt: Date.now(),
+                lastActive: Date.now()
             }
         }
     });
@@ -203,42 +194,42 @@ async function createRoom() {
     currentRoomId = roomId;
     localStorage.setItem('lobbyLink_currentRoom', roomId);
 
-    noTeamModal.classList.remove('hidden');
-    noTeamModal.style.display = 'flex';
-    findBtn.disabled = false;
+    searchingModal.classList.remove('hidden');
+    searchingModal.style.display = 'flex';
+    searchRoomPlayers.textContent = '1';
 
-    listenToOurRoom(roomId);
-}
-
-// ==========================================
-// WATCH OUR ROOM
-// ==========================================
-function listenToOurRoom(roomId) {
     if (roomListenerUnsubscribe) roomListenerUnsubscribe();
-
-    roomListenerUnsubscribe = onValue(ref(db, `rooms/${roomId}/players`), async (snapshot) => {
-        if (!snapshot.exists()) {
-            // Room was deleted (likely by us leaving or cleanup)
-            return;
-        }
-
-        const players = snapshot.val() || {};
+    roomListenerUnsubscribe = onValue(ref(db, `rooms/${roomId}/players`), (snap) => {
+        if (!snap.exists()) return;
+        const players = snap.val() || {};
         const count = Object.keys(players).length;
         searchRoomPlayers.textContent = count;
 
-        // If someone else joined, switch to "searching" modal
         if (count > 1) {
-            noTeamModal.classList.add('hidden');
-            noTeamModal.style.display = 'none';
-            searchingModal.classList.remove('hidden');
-            searchingModal.style.display = 'flex';
-        }
-
-        // If full, jump to room
-        if (count >= 4) {
+            clearTimeout(graceTimer);
+            if (count >= 4) {
+                update(ref(db, `rooms/${roomId}`), { status: 'full' });
+            }
             window.location.href = `room.html?room=${roomId}`;
         }
     });
+
+    graceTimer = setTimeout(async () => {
+        const snap = await get(ref(db, `rooms/${roomId}/players`));
+        const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+
+        if (count > 1) {
+            window.location.href = `room.html?room=${roomId}`;
+            return;
+        }
+
+        searchingModal.classList.add('hidden');
+        searchingModal.style.display = 'none';
+        noTeamModal.classList.remove('hidden');
+        noTeamModal.style.display = 'flex';
+        findBtn.disabled = false;
+        isSearching = false;
+    }, GRACE_PERIOD_MS);
 }
 
 // ==========================================
@@ -248,13 +239,14 @@ tryAgainBtn.addEventListener('click', async () => {
     noTeamModal.classList.add('hidden');
     noTeamModal.style.display = 'none';
     isSearching = false;
-    findBtn.disabled = false;
+    if (liveCount >= 2) findBtn.disabled = false;
 });
 
 // ==========================================
-// CANCEL SEARCH (STRICT CLEANUP)
+// CANCEL
 // ==========================================
 cancelSearchBtn.addEventListener('click', async () => {
+    clearTimeout(graceTimer);
     await leaveCurrentRoom();
     window.location.href = 'lobby.html';
 });
@@ -266,18 +258,14 @@ async function leaveCurrentRoom() {
     }
 
     if (currentRoomId) {
-        // Remove ourselves
         await remove(ref(db, `rooms/${currentRoomId}/players/${user.username}`));
 
-        // Check if room is empty
         const snap = await get(ref(db, `rooms/${currentRoomId}/players`));
         const remaining = snap.exists() ? Object.keys(snap.val()).length : 0;
 
         if (remaining === 0) {
-            // Nuke the room completely
             await remove(ref(db, `rooms/${currentRoomId}`));
         } else {
-            // Keep it open for others
             await update(ref(db, `rooms/${currentRoomId}`), { status: 'open' });
         }
     }
@@ -285,11 +273,10 @@ async function leaveCurrentRoom() {
     currentRoomId = null;
     localStorage.removeItem('lobbyLink_currentRoom');
     isSearching = false;
-    findBtn.disabled = false;
 }
 
 // ==========================================
-// CLEANUP ON CLOSE
+// CLEANUP
 // ==========================================
 window.addEventListener('beforeunload', () => {
     stopHeartbeat();
