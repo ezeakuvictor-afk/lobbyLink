@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LobbyLink - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+
+    <div class="login-container">
+        <!-- Logo / Title Area -->
+        <div class="logo-area">
+            <h1>LOBBY<span>LINK</span></h1>
+            <p class="subtitle">Find your squad. Dominate Bloodstrike.</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="login-form">
+            
+            <!-- Username -->
+            <div class="input-group">
+                <label for="username">Your Username</label>
+                <input type="text" id="username" placeholder="e.g. ShadowStrike" required maxlength="16">
+            </div>
+
+            <!-- Bloodstrike UID -->
+            <div class="input-group">
+                <label for="uid">Bloodstrike UID</label>
+                <input type="text" id="uid" placeholder="Paste your in-game UID" required>
+                <small class="hint">Find this in your Bloodstrike profile.</small>
+            </div>
+
+            <!-- Rank Dropdown -->
+            <div class="input-group">
+                <label for="rank">Current Rank</label>
+                <select id="rank" required>
+                    <option value="" disabled selected>Select your rank...</option>
+                    <option value="Bronze">Bronze</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Platinum">Platinum</option>
+                    <option value="Diamond">Diamond</option>
+                    <option value="Master">Master</option>
+                    <option value="Legend">Legend</option>
+                </select>
+            </div>
+
+            <!-- Enter Button -->
+            <button type="submit" class="btn-primary" id="enterBtn">
+                ENTER THE LOBBY
+            </button>
+        </form>
+
+        <div class="footer-note">
+            <p>Ready to find your team?</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module" src="login.js"></script>
+</body>
+</html>

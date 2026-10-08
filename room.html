@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LobbyLink - Squad Room</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="room-page">
+
+    <!-- HEADER -->
+    <header class="room-header">
+        <div class="room-header-left">
+            <span class="room-label">SQUAD ROOM</span>
+            <span class="room-id" id="roomCode">BSC-0000</span>
+        </div>
+        <button class="btn-leave" id="leaveBtn">LEAVE</button>
+    </header>
+
+    <!-- SQUAD BAR -->
+    <div class="squad-bar" id="squadBar"></div>
+
+    <!-- CHAT MESSAGES -->
+    <main class="chat-messages" id="chatMessages"></main>
+
+    <!-- MESSAGE INPUT -->
+    <form class="chat-input-bar" id="chatForm">
+        <input 
+            type="text" 
+            id="messageInput" 
+            placeholder="Type a message..." 
+            autocomplete="off"
+            maxlength="200"
+        >
+        <button type="submit" id="sendBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+            </svg>
+        </button>
+    </form>
+
+    <!-- FLOATING LAUNCH BUTTON -->
+    <button class="fab-launch" id="launchBtn" title="Open Blood Strike">
+        <span class="fab-icon">🎮</span>
+    </button>
+
+    <!-- LAUNCH INSTRUCTION MODAL -->
+    <div class="modal-overlay hidden" id="launchModal">
+        <div class="modal-card">
+            <div class="modal-icon">🎮</div>
+            <h2>READY TO SQUAD UP?</h2>
+            <p>1. Copy a teammate's UID below.</p>
+            <p>2. Tap LAUNCH to open Blood Strike.</p>
+            <p>3. Paste the UID into the friend search bar.</p>
+            <p class="modal-sub">You do the pasting — we never touch your game.</p>
+            <button class="btn-primary" id="doLaunchBtn">LAUNCH BLOOD STRIKE</button>
+            <button class="btn-secondary" id="closeLaunchBtn">CANCEL</button>
+        </div>
+    </div>
+
+    <script type="module" src="room.js"></script>
+</body>
+</html>
