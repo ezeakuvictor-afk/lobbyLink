@@ -2,13 +2,38 @@
 // IMPORTS
 // ==========================================
 import { firebaseConfig } from './fireBaseConfig.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+    getDatabase, ref, get, set
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 // ==========================================
-// AUTO-LOGIN CHECK
+// AUTO-LOGIN CHECK (with staleness guard)
 // ==========================================
-const savedUser = localStorage.getItem('lobbyLink_user');
-if (savedUser) {
-    window.location.href = 'lobby.html';
+const savedUserRaw = localStorage.getItem('lobbyLink_user');
+if (savedUserRaw) {
+    try {
+        const savedUser = JSON.parse(savedUserRaw);
+        const loginTime = new Date(savedUser.loginTime).getTime();
+        const now = Date.now();
+        const ONE_DAY = 24 * 60 * 60 * 1000;
+
+        // If logged in within the last 24 hours, skip login
+        if (now - loginTime < ONE_DAY) {
+            window.location.href = 'lobby.html';
+        } else {
+            // Stale — clear it and show login
+            localStorage.removeItem('lobbyLink_user');
+            localStorage.removeItem('lobbyLink_currentRoom');
+        }
+    } catch (e) {
+        // Corrupted data — clear it
+        localStorage.removeItem('lobbyLink_user');
+        localStorage.removeItem('lobbyLink_currentRoom');
+    }
 }
 
 // ==========================================
@@ -17,8 +42,8 @@ if (savedUser) {
 const loginForm = document.getElementById('loginForm');
 const uidInput  = document.getElementById('uid');
 const uidError  = document.getElementById('uidError');
+const enterBtn  = document.getElementById('enterBtn');
 
-// Strip non-numbers as the user types
 uidInput.addEventListener('input', () => {
     uidInput.value = uidInput.value.replace(/\D/g, '').slice(0, 12);
     uidError.textContent = '';
@@ -27,7 +52,7 @@ uidInput.addEventListener('input', () => {
 // ==========================================
 // SUBMIT
 // ==========================================
-loginForm.addEventListener('submit', function (event) {
+loginForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const username = document.getElementById('username').value.trim();
@@ -39,28 +64,94 @@ loginForm.addEventListener('submit', function (event) {
         return;
     }
 
-    // Validate UID
     if (uid.length !== 12 || !/^\d{12}$/.test(uid)) {
         uidError.textContent = `UID must be exactly 12 digits (you entered ${uid.length}).`;
         uidInput.focus();
         return;
     }
 
-    const userData = {
-        username: username,
-        uid: uid,
-        rank: rank,
-        game: "Bloodstrike",
-        avatarColor: getRandomColor(username),
-        loginTime: new Date().toISOString()
-    };
+    if (username.length < 3) {
+        alert("Username must be at least 3 characters.");
+        return;
+    }
 
-    localStorage.setItem('lobbyLink_user', JSON.stringify(userData));
-    window.location.href = 'lobby.html';
+    enterBtn.disabled = true;
+    enterBtn.textContent = 'CHECKING...';
+
+    try {
+        // ==========================================
+        // CHECK FOR DUPLICATE USERNAME
+        // ==========================================
+        const usernameSnap = await get(ref(db, 'registered_users/' + username.toLowerCase()));
+        if (usernameSnap.exists()) {
+            alert(`The username "${username}" is already taken. Pick another one.`);
+            enterBtn.disabled = false;
+            enterBtn.textContent = 'ENTER THE LOBBY';
+            return;
+        }
+
+        // ==========================================
+        // CHECK FOR DUPLICATE UID
+        // ==========================================
+        // We scan all registered users to see if this UID is claimed.
+        const allUsersSnap = await get(ref(db, 'registered_users'));
+        let uidTaken = false;
+        let takenBy = '';
+
+        if (allUsersSnap.exists()) {
+            allUsersSnap.forEach((child) => {
+                const u = child.val();
+                if (u && u.uid === uid && u.username.toLowerCase() !== username.toLowerCase()) {
+                    uidTaken = true;
+                    takenBy = u.username;
+                }
+            });
+        }
+
+        if (uidTaken) {
+            uidError.textContent = `This UID is already registered to "${takenBy}".`;
+            alert(`This Bloodstrike UID is already in use by "${takenBy}". Each UID can only belong to one LobbyLink account.`);
+            enterBtn.disabled = false;
+            enterBtn.textContent = 'ENTER THE LOBBY';
+            return;
+        }
+
+        // ==========================================
+        // REGISTER THE USER
+        // ==========================================
+        const userData = {
+            username: username,
+            uid: uid,
+            rank: rank,
+            game: "Bloodstrike",
+            avatarColor: getRandomColor(username),
+            loginTime: new Date().toISOString()
+        };
+
+        // Save to Firebase (so we can check duplicates later)
+        await set(ref(db, 'registered_users/' + username.toLowerCase()), {
+            username: username,
+            uid: uid,
+            rank: rank,
+            registeredAt: Date.now()
+        });
+
+        // Save to localStorage
+        localStorage.setItem('lobbyLink_user', JSON.stringify(userData));
+
+        // Go to lobby
+        window.location.href = 'lobby.html';
+
+    } catch (err) {
+        console.error("Login error:", err);
+        alert("Could not log in right now. Check your connection and try again.");
+        enterBtn.disabled = false;
+        enterBtn.textContent = 'ENTER THE LOBBY';
+    }
 });
 
 // ==========================================
-// HASH USERNAME → COLOR
+// USERNAME → COLOR
 // ==========================================
 function getRandomColor(str) {
     let hash = 0;
@@ -72,4 +163,4 @@ function getRandomColor(str) {
         '#4d96ff', '#9b5de5', '#f15bb5', '#00bbf9'
     ];
     return colors[Math.abs(hash) % colors.length];
-            }
+                           }
