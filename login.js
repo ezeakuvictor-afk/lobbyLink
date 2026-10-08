@@ -1,69 +1,75 @@
 // ==========================================
-// IMPORT FIREBASE CONFIG
+// IMPORTS
 // ==========================================
 import { firebaseConfig } from './fireBaseConfig.js';
 
 // ==========================================
-// 1. CHECK IF USER IS ALREADY LOGGED IN
+// AUTO-LOGIN CHECK
 // ==========================================
-// If the user has already logged in before, skip this screen
 const savedUser = localStorage.getItem('lobbyLink_user');
-
 if (savedUser) {
-    console.log("User already logged in. Redirecting to lobby...");
     window.location.href = 'lobby.html';
 }
 
 // ==========================================
-// 2. HANDLE LOGIN FORM SUBMISSION
+// UI
 // ==========================================
 const loginForm = document.getElementById('loginForm');
+const uidInput  = document.getElementById('uid');
+const uidError  = document.getElementById('uidError');
 
-loginForm.addEventListener('submit', function(event) {
-    event.preventDefault(); // Stop the page from refreshing
+// Strip non-numbers as the user types
+uidInput.addEventListener('input', () => {
+    uidInput.value = uidInput.value.replace(/\D/g, '').slice(0, 12);
+    uidError.textContent = '';
+});
 
-    // Get the values from the input fields
+// ==========================================
+// SUBMIT
+// ==========================================
+loginForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+
     const username = document.getElementById('username').value.trim();
-    const uid = document.getElementById('uid').value.trim();
-    const rank = document.getElementById('rank').value;
+    const uid      = uidInput.value.trim();
+    const rank     = document.getElementById('rank').value;
 
-    // Sanity check
-    if (!username || !uid || !rank) {
+    if (!username || !rank) {
         alert("Please fill in all fields!");
         return;
     }
 
-    // Create a user object to save
+    // Validate UID
+    if (uid.length !== 12 || !/^\d{12}$/.test(uid)) {
+        uidError.textContent = `UID must be exactly 12 digits (you entered ${uid.length}).`;
+        uidInput.focus();
+        return;
+    }
+
     const userData = {
         username: username,
         uid: uid,
         rank: rank,
         game: "Bloodstrike",
-        avatarColor: getRandomColor(username), // Generate a color based on their name
+        avatarColor: getRandomColor(username),
         loginTime: new Date().toISOString()
     };
 
-    // Save the user to localStorage
     localStorage.setItem('lobbyLink_user', JSON.stringify(userData));
-
-    console.log("User saved:", userData);
-
-    // Redirect them to the lobby
     window.location.href = 'lobby.html';
 });
 
 // ==========================================
-// 3. HELPER: GENERATE A COLOR FROM USERNAME
+// HASH USERNAME → COLOR
 // ==========================================
-// This gives each user a consistent colored avatar in the UI
 function getRandomColor(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
     const colors = [
-        '#ff4d4d', '#ff8c42', '#ffd93d', '#6bcb77', 
+        '#ff4d4d', '#ff8c42', '#ffd93d', '#6bcb77',
         '#4d96ff', '#9b5de5', '#f15bb5', '#00bbf9'
     ];
     return colors[Math.abs(hash) % colors.length];
-}
+            }
