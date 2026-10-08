@@ -4,18 +4,20 @@
 import { firebaseConfig } from './fireBaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-    getDatabase, ref, set, update, remove, onValue, 
-    get, push
+    getDatabase, ref, set, update, remove, onValue, get, push
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// ==========================================
-// FIREBASE INIT
-// ==========================================
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ==========================================
-// GET USER + ROOM ID
+// CONFIG (tweak these)
+// ==========================================
+const INACTIVITY_WARN_MS = 20000;  // 20s of silence → show warning
+const INACTIVITY_KICK_MS = 10000;  // 10s more silence after warning → kick
+
+// ==========================================
+// GET USER + ROOM
 // ==========================================
 const savedUser = localStorage.getItem('lobbyLink_user');
 if (!savedUser) window.location.href = 'index.html';
@@ -23,10 +25,7 @@ const user = JSON.parse(savedUser);
 
 let roomId = new URLSearchParams(window.location.search).get('room');
 if (!roomId) roomId = localStorage.getItem('lobbyLink_currentRoom');
-if (!roomId) {
-    alert("No room found. Redirecting to lobby.");
-    window.location.href = 'lobby.html';
-}
+if (!roomId) window.location.href = 'lobby.html';
 localStorage.setItem('lobbyLink_currentRoom', roomId);
 
 // ==========================================
@@ -59,44 +58,52 @@ roomCodeEl.textContent = generateShortCode(roomId);
 // ==========================================
 // JOIN ROOM
 // ==========================================
+let roomHeartbeat = null;
+function pulseInRoom() {
+    update(ref(db, `rooms/${roomId}/players/${user.username}`), {
+        lastActive: Date.now()
+    }).catch(() => {});
+}
+
 async function ensureInRoom() {
     const roomRef = ref(db, `rooms/${roomId}`);
     const roomSnap = await get(roomRef);
 
     if (!roomSnap.exists()) {
-        await set(roomRef, {
-            status: 'open',
-            createdAt: Date.now(),
-            players: {}
-        });
+        await set(roomRef, { status: 'open', createdAt: Date.now(), players: {} });
     }
 
     await update(ref(db, `rooms/${roomId}/players/${user.username}`), {
         uid: user.uid,
         rank: user.rank,
         avatarColor: user.avatarColor,
-        joinedAt: Date.now()
+        joinedAt: Date.now(),
+        lastActive: Date.now()
     });
+
+    roomHeartbeat = setInterval(pulseInRoom, 5000);
 }
 ensureInRoom();
 
 // ==========================================
 // SQUAD BAR
 // ==========================================
-const playersRef = ref(db, `rooms/${roomId}/players`);
-onValue(playersRef, (snapshot) => {
+onValue(ref(db, `rooms/${roomId}/players`), (snapshot) => {
     if (!snapshot.exists()) {
-        // Room was deleted by another player — boot us out
-        alert("The room was closed.");
         window.location.href = 'lobby.html';
         return;
     }
 
     const players = snapshot.val() || {};
-    const playerList = Object.keys(players);
+    const now = Date.now();
+
+    const livePlayers = Object.keys(players).filter((username) => {
+        const p = players[username];
+        return (now - (p.lastActive || 0)) < 15000;
+    });
 
     squadBar.innerHTML = '';
-    playerList.forEach((username) => {
+    livePlayers.forEach((username) => {
         const p = players[username];
         const isMe = username === user.username;
 
@@ -155,7 +162,7 @@ onValue(playersRef, (snapshot) => {
         squadBar.appendChild(card);
     });
 
-    if (playerList.length >= 4) {
+    if (livePlayers.length >= 4) {
         update(ref(db, `rooms/${roomId}`), { status: 'full' });
     }
 });
@@ -168,11 +175,10 @@ const messagesRef = ref(db, `rooms/${roomId}/messages`);
 onValue(messagesRef, (snapshot) => {
     chatMessages.innerHTML = '';
     const messages = snapshot.val() || {};
-    
-    const sortedMessages = Object.entries(messages)
+    const sorted = Object.entries(messages)
         .sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
 
-    sortedMessages.forEach(([key, msg]) => {
+    sorted.forEach(([key, msg]) => {
         const isMe = msg.username === user.username;
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg ${isMe ? 'msg-me' : 'msg-other'}`;
@@ -198,6 +204,9 @@ onValue(messagesRef, (snapshot) => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
+// ==========================================
+// SEND MESSAGE (resets inactivity timer)
+// ==========================================
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = messageInput.value.trim();
@@ -217,27 +226,88 @@ chatForm.addEventListener('submit', async (e) => {
     
     messageInput.value = '';
     messageInput.focus();
+
+    // Reset inactivity clock
+    resetInactivity();
 });
 
 // ==========================================
-// LEAVE ROOM (STRICT: Nuke if last one)
+// INACTIVITY WATCHDOG
+// ==========================================
+let inactivityTimer = null;
+let warningTimer = null;
+let warningToast = null;
+
+function resetInactivity() {
+    clearTimeout(inactivityTimer);
+    clearTimeout(warningTimer);
+    removeWarningToast();
+
+    // 20s → show warning
+    warningTimer = setTimeout(() => {
+        showWarningToast();
+        // 10s more → kick
+        inactivityTimer = setTimeout(() => {
+            kickForInactivity();
+        }, INACTIVITY_KICK_MS);
+    }, INACTIVITY_WARN_MS);
+}
+
+function showWarningToast() {
+    removeWarningToast();
+    warningToast = document.createElement('div');
+    warningToast.className = 'toast-warning';
+    warningToast.innerHTML = `
+        <span>You've been quiet for a while. Still here?</span>
+        <button id="imHereBtn">I'M HERE</button>
+    `;
+    document.body.appendChild(warningToast);
+
+    const btn = document.getElementById('imHereBtn');
+    btn.onclick = () => {
+        removeWarningToast();
+        resetInactivity();
+    };
+}
+
+function removeWarningToast() {
+    if (warningToast && warningToast.parentNode) {
+        warningToast.parentNode.removeChild(warningToast);
+    }
+    warningToast = null;
+}
+
+async function kickForInactivity() {
+    removeWarningToast();
+    await remove(ref(db, `rooms/${roomId}/players/${user.username}`));
+    localStorage.removeItem('lobbyLink_currentRoom');
+    alert("You were removed from the room due to inactivity.");
+    window.location.href = 'lobby.html';
+}
+
+// Start the watchdog
+resetInactivity();
+
+// Also reset on any typing (not just sending)
+messageInput.addEventListener('input', resetInactivity);
+
+// ==========================================
+// LEAVE
 // ==========================================
 leaveBtn.addEventListener('click', async () => {
     if (!confirm("Leave the squad room?")) return;
+    if (roomHeartbeat) clearInterval(roomHeartbeat);
+    removeWarningToast();
+    clearTimeout(inactivityTimer);
+    clearTimeout(warningTimer);
 
-    // Remove ourselves
     await remove(ref(db, `rooms/${roomId}/players/${user.username}`));
-
-    // Check remaining players
     const snap = await get(ref(db, `rooms/${roomId}/players`));
     const remaining = snap.exists() ? Object.keys(snap.val()).length : 0;
 
     if (remaining === 0) {
-        // We're the last one — delete the whole room
         await remove(ref(db, `rooms/${roomId}`));
-        console.log("Room deleted (last player left)");
     } else {
-        // Others still here — just reopen it
         await update(ref(db, `rooms/${roomId}`), { status: 'open' });
     }
 
@@ -246,7 +316,7 @@ leaveBtn.addEventListener('click', async () => {
 });
 
 // ==========================================
-// LAUNCH BLOOD STRIKE
+// LAUNCH
 // ==========================================
 const BLOODSTRIKE_PACKAGE = 'com.netease.gp.bloodstrike';
 
@@ -279,17 +349,9 @@ doLaunchBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// CLEANUP ON CLOSE
+// CLEANUP
 // ==========================================
-window.addEventListener('beforeunload', async () => {
-    // Remove ourselves
-    await remove(ref(db, `rooms/${roomId}/players/${user.username}`));
-
-    // Check if we were the last one
-    const snap = await get(ref(db, `rooms/${roomId}/players`));
-    const remaining = snap.exists() ? Object.keys(snap.val()).length : 0;
-
-    if (remaining === 0) {
-        remove(ref(db, `rooms/${roomId}`));
-    }
+window.addEventListener('beforeunload', () => {
+    if (roomHeartbeat) clearInterval(roomHeartbeat);
+    remove(ref(db, `rooms/${roomId}/players/${user.username}`));
 });
