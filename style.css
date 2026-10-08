@@ -1,6 +1,7 @@
 /* ==========================================
-   GLOBAL
+   LOBBYLINK - GLOBAL STYLES
    ========================================== */
+
 * {
     margin: 0;
     padding: 0;
@@ -9,27 +10,49 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+:root {
+    --bg-main: #0a0a0f;
+    --bg-card: #12121a;
+    --bg-card-alt: #1a1a24;
+    --bg-input: #0a0a0f;
+    --border: #2a2a3a;
+    --text-main: #ffffff;
+    --text-muted: #7a7a8a;
+    --text-dim: #5a5a6a;
+    --accent: #ff3c3c;
+    --accent-dark: #d42a2a;
+    --accent-blue: #4a90e2;
+    --accent-blue-dark: #357abd;
+    --accent-green: #00b86b;
+    --accent-yellow: #ffd93d;
+    --card-max: 480px;
+}
+
 body {
-    background-color: #0a0a0f;
-    color: #ffffff;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* ==========================================
    LOGIN PAGE
    ========================================== */
+
 .login-page {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .login-container {
     width: 100%;
     max-width: 400px;
-    background: linear-gradient(145deg, #12121a, #1a1a24);
-    border: 1px solid #2a2a3a;
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-card-alt));
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 32px 24px;
     box-shadow: 0 0 40px rgba(255, 60, 60, 0.1);
@@ -41,12 +64,16 @@ body {
     font-size: 32px;
     letter-spacing: 4px;
     font-weight: 900;
-    color: #ffffff;
+    color: var(--text-main);
 }
 
-.logo-area h1 span { color: #ff3c3c; }
+.logo-area h1 span { color: var(--accent); }
 
-.subtitle { color: #7a7a8a; font-size: 13px; margin-top: 8px; }
+.subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 8px;
+}
 
 .input-group { margin-bottom: 20px; }
 
@@ -55,7 +82,7 @@ body {
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    color: #7a7a8a;
+    color: var(--text-muted);
     margin-bottom: 8px;
     letter-spacing: 1px;
 }
@@ -64,29 +91,29 @@ body {
 .input-group select {
     width: 100%;
     padding: 14px 16px;
-    background: #0a0a0f;
-    border: 1px solid #2a2a3a;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    color: #ffffff;
+    color: var(--text-main);
     font-size: 15px;
     outline: none;
     transition: border 0.2s;
 }
 
 .input-group input:focus,
-.input-group select:focus { border-color: #ff3c3c; }
+.input-group select:focus { border-color: var(--accent); }
 
 .hint {
     display: block;
     font-size: 11px;
-    color: #5a5a6a;
+    color: var(--text-dim);
     margin-top: 6px;
 }
 
 .btn-primary {
     width: 100%;
     padding: 16px;
-    background: #ff3c3c;
+    background: var(--accent);
     color: white;
     border: none;
     border-radius: 8px;
@@ -98,34 +125,52 @@ body {
     margin-top: 10px;
 }
 
-.btn-primary:active { background: #d42a2a; transform: scale(0.98); }
+.btn-primary:active { background: var(--accent-dark); transform: scale(0.98); }
 
 .footer-note {
     text-align: center;
     margin-top: 24px;
-    color: #5a5a6a;
+    color: var(--text-dim);
     font-size: 12px;
 }
 
 /* ==========================================
-   LOBBY
+   LOBBY PAGE
    ========================================== */
-.lobby-page { display: block; padding: 0; }
 
-.lobby-header {
+.lobby-page {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: #12121a;
-    border-bottom: 1px solid #2a2a3a;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Header full-width on mobile, constrained on desktop */
+.lobby-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
-.header-logo { font-size: 18px; font-weight: 900; letter-spacing: 2px; }
-.header-logo span { color: #ff3c3c; }
+.header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    max-width: var(--card-max);
+    margin: 0 auto;
+    width: 100%;
+}
+
+.header-logo {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.header-logo span { color: var(--accent); }
 
 .header-user { display: flex; align-items: center; gap: 8px; }
 
@@ -145,16 +190,18 @@ body {
 
 .lobby-main {
     padding: 24px 20px;
-    max-width: 500px;
+    max-width: var(--card-max);
     margin: 0 auto;
+    width: 100%;
+    flex: 1;
 }
 
 .profile-card {
     display: flex;
     align-items: center;
     gap: 16px;
-    background: linear-gradient(145deg, #12121a, #1a1a24);
-    border: 1px solid #2a2a3a;
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-card-alt));
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px;
     margin-bottom: 24px;
@@ -174,15 +221,15 @@ body {
 }
 
 .profile-info h2 { font-size: 20px; margin-bottom: 4px; }
-.profile-rank { font-size: 14px; color: #ffd93d; margin-bottom: 2px; }
-.profile-uid { font-size: 12px; color: #5a5a6a; }
+.profile-rank { font-size: 14px; color: var(--accent-yellow); margin-bottom: 2px; }
+.profile-uid { font-size: 12px; color: var(--text-dim); }
 
 .action-section { text-align: center; margin-bottom: 24px; }
 
 .btn-find {
     width: 100%;
     padding: 24px;
-    background: #ff3c3c;
+    background: var(--accent);
     color: white;
     border: none;
     border-radius: 16px;
@@ -198,12 +245,22 @@ body {
     transition: all 0.2s;
 }
 
-.btn-find:active { background: #d42a2a; transform: scale(0.98); }
-.btn-find:disabled { background: #5a2a2a; box-shadow: none; cursor: not-allowed; }
+.btn-find:active { background: var(--accent-dark); transform: scale(0.98); }
+
+.btn-find:disabled {
+    background: #2a2a3a;
+    color: #5a5a6a;
+    box-shadow: none;
+    cursor: not-allowed;
+}
 
 .btn-icon { font-size: 22px; }
 
-.action-hint { margin-top: 12px; color: #7a7a8a; font-size: 12px; }
+.action-hint {
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
 
 .live-counter {
     display: flex;
@@ -211,11 +268,11 @@ body {
     justify-content: center;
     gap: 8px;
     padding: 12px;
-    background: #12121a;
+    background: var(--bg-card);
     border-radius: 12px;
-    color: #7a7a8a;
+    color: var(--text-muted);
     font-size: 13px;
-    border: 1px solid #2a2a3a;
+    border: 1px solid var(--border);
 }
 
 .counter-dot {
@@ -234,9 +291,10 @@ body {
 /* ==========================================
    MODALS
    ========================================== */
+
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
@@ -249,12 +307,12 @@ body {
 .modal-overlay.hidden { display: none; }
 
 .modal-card {
-    background: linear-gradient(145deg, #12121a, #1a1a24);
-    border: 1px solid #2a2a3a;
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-card-alt));
+    border: 1px solid var(--border);
     border-radius: 20px;
     padding: 32px 24px;
     text-align: center;
-    max-width: 360px;
+    max-width: 380px;
     width: 100%;
     box-shadow: 0 0 60px rgba(255, 60, 60, 0.2);
 }
@@ -265,24 +323,27 @@ body {
     font-size: 18px;
     letter-spacing: 2px;
     margin-bottom: 12px;
-    color: #ff3c3c;
+    color: var(--accent);
 }
 
-.modal-card p { color: #999; font-size: 14px; margin-bottom: 8px; text-align: left; }
+.modal-card p {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
 
 .modal-sub {
     font-size: 12px !important;
-    color: #5a5a6a !important;
+    color: var(--text-dim) !important;
     margin-bottom: 20px !important;
-    text-align: center !important;
     font-style: italic;
 }
 
 .search-spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid #2a2a3a;
-    border-top: 4px solid #ff3c3c;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--accent);
     border-radius: 50%;
     margin: 0 auto 20px;
     animation: spin 1s linear infinite;
@@ -295,7 +356,7 @@ body {
 
 .btn-secondary {
     background: transparent;
-    border: 1px solid #5a5a6a;
+    border: 1px solid var(--text-dim);
     color: #999;
     padding: 12px 24px;
     border-radius: 8px;
@@ -307,26 +368,34 @@ body {
     width: 100%;
 }
 
-.btn-secondary:active { background: #1a1a24; }
+.btn-secondary:active { background: var(--bg-card-alt); }
 
 /* ==========================================
-   CHAT ROOM PAGE
+   CHAT ROOM
    ========================================== */
+
 .room-page {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
 .room-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.room-header-inner {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 14px 20px;
-    background: #12121a;
-    border-bottom: 1px solid #2a2a3a;
-    flex-shrink: 0;
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .room-header-left { display: flex; flex-direction: column; }
@@ -334,20 +403,20 @@ body {
 .room-label {
     font-size: 10px;
     letter-spacing: 2px;
-    color: #5a5a6a;
+    color: var(--text-dim);
     font-weight: 700;
 }
 
 .room-id {
     font-size: 18px;
     font-weight: 900;
-    color: #ff3c3c;
+    color: var(--accent);
     letter-spacing: 1px;
 }
 
 .btn-leave {
     background: transparent;
-    border: 1px solid #5a5a6a;
+    border: 1px solid var(--text-dim);
     color: #999;
     padding: 8px 14px;
     border-radius: 6px;
@@ -357,17 +426,15 @@ body {
     cursor: pointer;
 }
 
-.btn-leave:active { background: #1a1a24; }
+.btn-leave:active { background: var(--bg-card-alt); }
 
-/* ==========================================
-   SQUAD BAR + MEMBER CARDS
-   ========================================== */
+/* Squad bar + chat constrained on desktop */
 .squad-bar {
     display: flex;
     gap: 8px;
     padding: 10px 12px;
     background: #0f0f16;
-    border-bottom: 1px solid #2a2a3a;
+    border-bottom: 1px solid var(--border);
     overflow-x: auto;
     flex-shrink: 0;
     scrollbar-width: none;
@@ -376,8 +443,8 @@ body {
 .squad-bar::-webkit-scrollbar { display: none; }
 
 .squad-member {
-    background: radial-gradient(circle at center, #1a1a24 0%, #0f0f16 70%);
-    border: 1px solid #2a2a3a;
+    background: radial-gradient(circle at center, var(--bg-card-alt) 0%, #0f0f16 70%);
+    border: 1px solid var(--border);
     border-radius: 0;
     padding: 8px 10px;
     min-width: 130px;
@@ -389,15 +456,11 @@ body {
 }
 
 .squad-me {
-    border-color: #ff3c3c;
+    border-color: var(--accent);
     background: radial-gradient(circle at center, #2a0f0f 0%, #0f0f16 70%);
 }
 
-.squad-top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.squad-top { display: flex; align-items: center; gap: 8px; }
 
 .squad-avatar {
     width: 32px;
@@ -412,11 +475,7 @@ body {
     flex-shrink: 0;
 }
 
-.squad-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
+.squad-info { display: flex; flex-direction: column; min-width: 0; }
 
 .squad-name {
     font-size: 12px;
@@ -427,29 +486,24 @@ body {
     text-overflow: ellipsis;
 }
 
-.squad-rank {
-    font-size: 9px;
-    color: #ffd93d;
-    white-space: nowrap;
-}
+.squad-rank { font-size: 9px; color: var(--accent-yellow); white-space: nowrap; }
 
 .squad-uid {
     font-size: 9px;
-    color: #7a7a8a;
+    color: var(--text-muted);
     font-family: monospace;
     text-align: center;
     padding: 2px 4px;
-    background: #0a0a0f;
-    border: 1px solid #1a1a24;
+    background: var(--bg-main);
+    border: 1px solid var(--bg-card-alt);
     width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    letter-spacing: 0.5px;
 }
 
 .btn-copy-uid {
-    background: #4a90e2;
+    background: var(--accent-blue);
     border: none;
     color: white;
     padding: 5px 6px;
@@ -459,17 +513,16 @@ body {
     letter-spacing: 1px;
     cursor: pointer;
     width: 100%;
-    transition: background 0.2s;
 }
 
-.btn-copy-uid:active { background: #357abd; }
-.btn-copy-uid.copied { background: #00b86b; }
+.btn-copy-uid:active { background: var(--accent-blue-dark); }
+.btn-copy-uid.copied { background: var(--accent-green); }
 
 .badge-you {
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 2px;
-    color: #ff3c3c;
+    color: var(--accent);
     background: rgba(255, 60, 60, 0.1);
     border: 1px solid rgba(255, 60, 60, 0.4);
     padding: 4px 6px;
@@ -478,9 +531,6 @@ body {
     text-align: center;
 }
 
-/* ==========================================
-   CHAT MESSAGES
-   ========================================== */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -488,20 +538,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-.msg {
-    display: flex;
-    flex-direction: column;
-    max-width: 75%;
-}
-
+.msg { display: flex; flex-direction: column; max-width: 75%; }
 .msg-me { align-self: flex-end; align-items: flex-end; }
 .msg-other { align-self: flex-start; align-items: flex-start; }
 
 .msg-header {
     font-size: 11px;
-    color: #7a7a8a;
+    color: var(--text-muted);
     margin-bottom: 4px;
     padding: 0 6px;
     font-weight: 500;
@@ -517,71 +565,65 @@ body {
 }
 
 .msg-me .msg-bubble {
-    background: #4a90e2;
+    background: var(--accent-blue);
     color: white;
     border-bottom-right-radius: 6px;
 }
 
 .msg-other .msg-bubble {
-    background: #1a1a24;
+    background: var(--bg-card-alt);
     color: #ddd;
     border-bottom-left-radius: 6px;
 }
 
 .msg-time {
     font-size: 10px;
-    color: #5a5a6a;
+    color: var(--text-dim);
     margin-top: 4px;
     padding: 0 6px;
 }
 
-/* ==========================================
-   MESSAGE INPUT
-   ========================================== */
 .chat-input-bar {
     display: flex;
     gap: 8px;
     padding: 12px 16px;
-    background: #12121a;
-    border-top: 1px solid #2a2a3a;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
     flex-shrink: 0;
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 #messageInput {
     flex: 1;
     padding: 12px 16px;
-    background: #0a0a0f;
-    border: 1px solid #2a2a3a;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
     border-radius: 24px;
     color: white;
     font-size: 14px;
     outline: none;
 }
 
-#messageInput:focus { border-color: #ff3c3c; }
+#messageInput:focus { border-color: var(--accent); }
 
 #sendBtn {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: #ff3c3c;
+    background: var(--accent);
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.15s, transform 0.1s;
 }
 
-#sendBtn:active {
-    background: #d42a2a;
-    transform: scale(0.95);
-}
+#sendBtn:active { background: var(--accent-dark); transform: scale(0.95); }
 
-/* ==========================================
-   FLOATING LAUNCH BUTTON
-   ========================================== */
+/* Floating launch button */
 .fab-launch {
     position: fixed;
     bottom: 90px;
@@ -589,7 +631,7 @@ body {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(145deg, #ff3c3c, #d42a2a);
+    background: linear-gradient(145deg, var(--accent), var(--accent-dark));
     border: none;
     color: white;
     font-size: 26px;
@@ -599,14 +641,86 @@ body {
     justify-content: center;
     box-shadow: 0 6px 20px rgba(255, 60, 60, 0.5);
     z-index: 500;
-    transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.fab-launch:active {
-    transform: scale(0.92);
-    box-shadow: 0 4px 12px rgba(255, 60, 60, 0.7);
+.fab-launch:active { transform: scale(0.92); }
+
+/* ==========================================
+   DESKTOP RESPONSIVENESS (min-width: 768px)
+   ========================================== */
+
+@media (min-width: 768px) {
+
+    /* Bigger logo, more breathing room */
+    .header-logo { font-size: 22px; }
+    .room-id { font-size: 22px; }
+
+    /* Larger buttons on desktop */
+    .btn-find {
+        padding: 28px;
+        font-size: 20px;
+    }
+
+    .btn-primary { padding: 18px; font-size: 16px; }
+
+    /* Wider cards with more padding */
+    .profile-card { padding: 28px; gap: 24px; }
+    .profile-avatar { width: 80px; height: 80px; font-size: 34px; }
+    .profile-info h2 { font-size: 24px; }
+
+    /* Side-by-side room layout on desktop: squad bar + chat */
+    .room-page { flex-direction: row; }
+
+    .room-header {
+        display: none; /* Optional: hide top header on desktop since room ID is on the side */
+    }
+
+    /* Squad bar becomes a left sidebar */
+    .squad-bar {
+        flex-direction: column;
+        width: 220px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 16px 12px;
+        border-right: 1px solid var(--border);
+        border-bottom: none;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .squad-member {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    /* Chat area takes remaining space */
+    .chat-messages {
+        max-width: none;
+        margin: 0;
+        padding: 24px 32px;
+    }
+
+    .chat-input-bar {
+        max-width: none;
+        margin: 0;
+        padding: 16px 32px;
+    }
+
+    #messageInput { font-size: 15px; }
 }
 
-.fab-icon {
-    filter: drop-shadow(0 0 4px rgba(0,0,0,0.4));
+@media (min-width: 1100px) {
+    /* Even wider on bigger screens */
+    .lobby-main { max-width: 560px; }
+    .header-inner { max-width: 560px; }
+}
+
+/* ==========================================
+   MOBILE: hide room header on very small screens for space
+   ========================================== */
+
+@media (max-width: 400px) {
+    .room-id { font-size: 16px; }
+    .squad-member { min-width: 120px; max-width: 140px; }
 }
