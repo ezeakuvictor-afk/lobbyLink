@@ -21,16 +21,18 @@ const user = JSON.parse(savedUser);
 // ==========================================
 // UI
 // ==========================================
-const findBtn = document.getElementById('findBtn');
-const findBtnText = document.getElementById('findBtnText');
-const actionHint = document.getElementById('actionHint');
-const noTeamModal = document.getElementById('noTeamModal');
+const findBtn        = document.getElementById('findBtn');
+const findBtnText    = document.getElementById('findBtnText');
+const actionHint     = document.getElementById('actionHint');
+const noTeamModal    = document.getElementById('noTeamModal');
 const searchingModal = document.getElementById('searchingModal');
-const tryAgainBtn = document.getElementById('tryAgainBtn');
-const cancelSearchBtn = document.getElementById('cancelSearchBtn');
-const liveCountEl = document.getElementById('liveCount');
-const counterLabel = document.getElementById('counterLabel');
+const tryAgainBtn    = document.getElementById('tryAgainBtn');
+const cancelSearchBtn= document.getElementById('cancelSearchBtn');
+const liveCountEl    = document.getElementById('liveCount');
+const counterLabel   = document.getElementById('counterLabel');
 const searchRoomPlayers = document.getElementById('searchRoomPlayers');
+const queueStatus    = document.getElementById('queueStatus');
+const logoutBtn      = document.getElementById('logoutBtn');
 
 document.getElementById('userName').textContent = user.username;
 document.getElementById('userAvatar').textContent = user.username[0].toUpperCase();
@@ -51,6 +53,17 @@ let roomListenerUnsubscribe = null;
 let graceTimer = null;
 let liveCount = 0;
 const GRACE_PERIOD_MS = 5000;
+
+// ==========================================
+// LOGOUT
+// ==========================================
+logoutBtn.addEventListener('click', () => {
+    if (!confirm("Log out of LobbyLink?")) return;
+    localStorage.removeItem('lobbyLink_user');
+    localStorage.removeItem('lobbyLink_currentRoom');
+    stopHeartbeat();
+    window.location.href = 'index.html';
+});
 
 // ==========================================
 // HEARTBEAT
@@ -80,20 +93,26 @@ function stopHeartbeat() {
 startHeartbeat();
 
 // ==========================================
-// LIVE COUNTER + SMART BUTTON
+// LIVE COUNTER + QUEUE STATUS + SMART BUTTON
 // ==========================================
 onValue(ref(db, 'live_players'), (snapshot) => {
     const now = Date.now();
     liveCount = 0;
+    const activeNames = [];
+    const queuingNames = [];
+
     snapshot.forEach((child) => {
         const p = child.val();
-        if (now - p.lastActive < 15000 && !p.roomId) liveCount++;
+        if (now - p.lastActive < 15000 && !p.roomId) {
+            liveCount++;
+            activeNames.push(p.username);
+        }
     });
 
     liveCountEl.textContent = liveCount;
     counterLabel.textContent = liveCount === 1 ? 'active player' : 'active players';
 
-    // Enable the button only when 2+ players are active
+    // Smart button
     if (liveCount >= 2) {
         findBtn.disabled = false;
         findBtnText.textContent = 'FIND TEAMMATES';
@@ -102,6 +121,40 @@ onValue(ref(db, 'live_players'), (snapshot) => {
         findBtn.disabled = true;
         findBtnText.textContent = 'WAITING FOR PLAYERS';
         actionHint.textContent = 'Waiting for another player to come online...';
+    }
+
+    // Queue status text — only shows when someone is actively in a room
+    const queuingSnap = snapshot; // We'll re-fetch rooms below
+});
+
+// Separate listener: watch all rooms to see who's actively queuing
+onValue(ref(db, 'rooms'), (snapshot) => {
+    if (!snapshot.exists()) {
+        queueStatus.textContent = '';
+        return;
+    }
+
+    const now = Date.now();
+    const queuingPlayers = [];
+
+    snapshot.forEach((child) => {
+        const room = child.val();
+        if (!room || !room.players) return;
+
+        Object.keys(room.players).forEach((username) => {
+            const p = room.players[username];
+            if (p.lastActive && (now - p.lastActive) < 15000) {
+                queuingPlayers.push(username);
+            }
+        });
+    });
+
+    if (queuingPlayers.length === 0) {
+        queueStatus.textContent = '';
+    } else if (queuingPlayers.includes(user.username)) {
+        queueStatus.textContent = `You are queuing. ${queuingPlayers.length} player${queuingPlayers.length > 1 ? 's' : ''} in queue.`;
+    } else {
+        queueStatus.textContent = `${queuingPlayers.join(', ')} ${queuingPlayers.length === 1 ? 'is' : 'are'} searching for a room...`;
     }
 });
 
@@ -120,7 +173,6 @@ findBtn.addEventListener('click', async () => {
 // ==========================================
 async function findOrCreateRoom() {
     const snapshot = await get(ref(db, 'rooms'));
-
     let foundRoomId = null;
     let foundRoomData = null;
 
@@ -146,9 +198,6 @@ async function findOrCreateRoom() {
     }
 }
 
-// ==========================================
-// JOIN
-// ==========================================
 async function joinRoom(roomId, roomData) {
     const playerCount = Object.keys(roomData.players || {}).length;
 
@@ -170,9 +219,6 @@ async function joinRoom(roomId, roomData) {
     window.location.href = `room.html?room=${roomId}`;
 }
 
-// ==========================================
-// CREATE WITH GRACE
-// ==========================================
 async function createRoomWithGrace() {
     const newRoomRef = push(ref(db, 'rooms'));
     const roomId = newRoomRef.key;
@@ -233,7 +279,7 @@ async function createRoomWithGrace() {
 }
 
 // ==========================================
-// TRY AGAIN
+// TRY AGAIN / CANCEL
 // ==========================================
 tryAgainBtn.addEventListener('click', async () => {
     noTeamModal.classList.add('hidden');
@@ -242,9 +288,6 @@ tryAgainBtn.addEventListener('click', async () => {
     if (liveCount >= 2) findBtn.disabled = false;
 });
 
-// ==========================================
-// CANCEL
-// ==========================================
 cancelSearchBtn.addEventListener('click', async () => {
     clearTimeout(graceTimer);
     await leaveCurrentRoom();
@@ -259,7 +302,6 @@ async function leaveCurrentRoom() {
 
     if (currentRoomId) {
         await remove(ref(db, `rooms/${currentRoomId}/players/${user.username}`));
-
         const snap = await get(ref(db, `rooms/${currentRoomId}/players`));
         const remaining = snap.exists() ? Object.keys(snap.val()).length : 0;
 
