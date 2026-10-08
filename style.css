@@ -646,76 +646,200 @@ body {
 .fab-launch:active { transform: scale(0.92); }
 
 /* ==========================================
-   DESKTOP RESPONSIVENESS (min-width: 768px)
+   DESKTOP RESPONSIVENESS (768px+)
    ========================================== */
 
 @media (min-width: 768px) {
 
-    /* Bigger logo, more breathing room */
-    .header-logo { font-size: 22px; }
-    .room-id { font-size: 22px; }
-
-    /* Larger buttons on desktop */
-    .btn-find {
-        padding: 28px;
-        font-size: 20px;
+    /* ============ GLOBAL ============ */
+    body {
+        background: radial-gradient(ellipse at center, #0f0f16 0%, #05050a 100%);
     }
 
-    .btn-primary { padding: 18px; font-size: 16px; }
+    /* ============ LOGIN ============ */
+    .login-container {
+        max-width: 420px;
+        padding: 40px 32px;
+    }
 
-    /* Wider cards with more padding */
+    .logo-area h1 { font-size: 38px; }
+
+    /* ============ LOBBY ============ */
+    .lobby-main { max-width: 520px; padding: 32px 20px; }
+    .header-inner { max-width: 520px; }
+    .header-logo { font-size: 22px; }
+
+    .btn-find { padding: 28px; font-size: 20px; }
+
     .profile-card { padding: 28px; gap: 24px; }
     .profile-avatar { width: 80px; height: 80px; font-size: 34px; }
     .profile-info h2 { font-size: 24px; }
 
-    /* Side-by-side room layout on desktop: squad bar + chat */
-    .room-page { flex-direction: row; }
-
-    .room-header {
-        display: none; /* Optional: hide top header on desktop since room ID is on the side */
+    /* ============ ROOM: TWO-COLUMN LAYOUT ============ */
+    .room-page {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        grid-template-rows: 60px 1fr;
+        grid-template-areas:
+            "sidebar header"
+            "sidebar chat";
+        height: 100vh;
+        height: 100dvh;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        gap: 0;
+        background: #05050a;
+        border-left: 1px solid #1a1a24;
+        border-right: 1px solid #1a1a24;
     }
 
-    /* Squad bar becomes a left sidebar */
+    /* --- Header (top right) --- */
+    .room-header {
+        grid-area: header;
+        display: flex;
+        align-items: center;
+        background: #12121a;
+        border-bottom: 1px solid #2a2a3a;
+        padding: 0;
+        flex-shrink: 0;
+    }
+
+    .room-header-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+        width: 100%;
+    }
+
+    .room-id { font-size: 20px; }
+
+    /* --- Squad Bar (left sidebar) --- */
     .squad-bar {
+        grid-area: sidebar;
         flex-direction: column;
-        width: 220px;
+        width: 100%;
+        padding: 16px 12px;
+        background: #0f0f16;
+        border-right: 1px solid #2a2a3a;
+        border-bottom: none;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 16px 12px;
-        border-right: 1px solid var(--border);
-        border-bottom: none;
         gap: 10px;
-        flex-shrink: 0;
+        scrollbar-width: thin;
+        scrollbar-color: #2a2a3a transparent;
+    }
+
+    .squad-bar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .squad-bar::-webkit-scrollbar-track { background: transparent; }
+    .squad-bar::-webkit-scrollbar-thumb {
+        background: #2a2a3a;
+        border-radius: 3px;
     }
 
     .squad-member {
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        padding: 12px;
     }
 
-    /* Chat area takes remaining space */
+    .squad-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .squad-name { font-size: 13px; }
+    .squad-uid { font-size: 10px; padding: 4px 6px; }
+
+    /* --- Chat Messages --- */
     .chat-messages {
+        grid-area: chat;
         max-width: none;
         margin: 0;
         padding: 24px 32px;
+        overflow-y: auto;
     }
 
+    .msg { max-width: 60%; }
+    .msg-bubble { font-size: 14px; padding: 10px 14px; }
+
+    /* --- Message Input Bar (FIXED: proper height) --- */
     .chat-input-bar {
+        position: fixed;
+        bottom: 0;
+        left: 300px;
+        right: 0;
         max-width: none;
         margin: 0;
         padding: 16px 32px;
+        background: #12121a;
+        border-top: 1px solid #2a2a3a;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 100;
     }
 
-    #messageInput { font-size: 15px; }
+    /* On very wide screens, constrain it */
+    @media (min-width: 1400px) {
+        .chat-input-bar {
+            left: calc(50% - 700px + 300px);
+            right: calc(50% - 700px);
+        }
+    }
+
+    #messageInput {
+        flex: 1;
+        height: 48px;
+        min-height: 48px;
+        max-height: 48px;
+        padding: 12px 20px;
+        font-size: 15px;
+        border-radius: 24px;
+    }
+
+    #sendBtn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        min-height: 48px;
+        flex-shrink: 0;
+    }
+
+    /* Push chat messages up so they don't hide behind the fixed input bar */
+    .chat-messages {
+        padding-bottom: 100px;
+    }
+
+    /* --- Floating Launch Button (repositioned for desktop) --- */
+    .fab-launch {
+        bottom: 24px;
+        right: 24px;
+        width: 64px;
+        height: 64px;
+        font-size: 28px;
+        box-shadow: 0 8px 28px rgba(255, 60, 60, 0.5);
+    }
 }
 
-@media (min-width: 1100px) {
-    /* Even wider on bigger screens */
-    .lobby-main { max-width: 560px; }
-    .header-inner { max-width: 560px; }
-}
+/* ==========================================
+   VERY WIDE SCREENS
+   ========================================== */
 
+@media (min-width: 1400px) {
+    .room-page {
+        border-radius: 12px;
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
+        margin: 20px auto;
+        height: calc(100vh - 40px);
+        height: calc(100dvh - 40px);
+    }
+}
 /* ==========================================
    MOBILE: hide room header on very small screens for space
    ========================================== */
