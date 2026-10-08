@@ -724,3 +724,101 @@ body {
     .room-id { font-size: 16px; }
     .squad-member { min-width: 120px; max-width: 140px; }
 }
+
+/* ==========================================
+   LOGOUT BUTTON
+   ========================================== */
+
+.btn-logout {
+    background: transparent;
+    border: 1px solid #2a2a3a;
+    color: #999;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-logout:active {
+    background: #ff3c3c;
+    color: white;
+    border-color: #ff3c3c;
+}
+
+/* ==========================================
+   QUEUE STATUS TEXT
+   ========================================== */
+
+.queue-status {
+    margin-top: 12px;
+    text-align: center;
+    color: #7a7a8a;
+    font-size: 12px;
+    min-height: 16px;
+    font-style: italic;
+    transition: opacity 0.3s;
+}
+
+/* ==========================================
+   WARNING TOAST (inactivity)
+   ========================================== */
+
+.toast-warning {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(145deg, #2a0f0f, #1a1a24);
+    border: 1px solid #ff3c3c;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    font-size: 13px;
+    z-index: 2000;
+    box-shadow: 0 6px 24px rgba(255, 60, 60, 0.4);
+    max-width: 90vw;
+    animation: slideDown 0.3s ease;
+}
+
+.toast-warning button {
+    background: #ff3c3c;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toast-warning button:active {
+    background: #d42a2a;
+}
+
+@keyframes slideDown {
+    from { transform: translate(-50%, -20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* ==========================================
+   ERROR TEXT (login validation)
+   ========================================== */
+
+.error-text {
+    display: block;
+    font-size: 11px;
+    color: #ff3c3c;
+    margin-top: 4px;
+    min-height: 14px;
+}
