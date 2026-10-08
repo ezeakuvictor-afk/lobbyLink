@@ -8,54 +8,42 @@
 </head>
 <body class="lobby-page">
 
-    <!-- ========================================== -->
-    <!-- HEADER BAR -->
-    <!-- ========================================== -->
     <header class="lobby-header">
-        <div class="header-logo">LOBBY<span>LINK</span></div>
-        <div class="header-user" id="headerUser">
-            <span class="user-avatar" id="userAvatar">V</span>
-            <span class="user-name" id="userName">Victor</span>
+        <div class="header-inner">
+            <div class="header-logo">LOBBY<span>LINK</span></div>
+            <div class="header-user">
+                <span class="user-avatar" id="userAvatar">V</span>
+                <span class="user-name" id="userName">Voltz2</span>
+            </div>
         </div>
     </header>
 
-    <!-- ========================================== -->
-    <!-- MAIN CONTENT -->
-    <!-- ========================================== -->
     <main class="lobby-main">
-
-        <!-- Player's Own Profile Card -->
         <section class="profile-card">
             <div class="profile-avatar" id="profileAvatar">V</div>
             <div class="profile-info">
-                <h2 id="profileName">Victor</h2>
-                <p class="profile-rank" id="profileRank">🥇 Gold</p>
-                <p class="profile-uid" id="profileUid">UID: 123456789</p>
+                <h2 id="profileName">Voltz2</h2>
+                <p class="profile-rank" id="profileRank">🥇 Master</p>
+                <p class="profile-uid" id="profileUid">UID: 0837276618y37</p>
             </div>
         </section>
 
-        <!-- The Big "Find Teammates" Button -->
         <section class="action-section">
-            <button class="btn-find" id="findBtn">
+            <button class="btn-find" id="findBtn" disabled>
                 <span class="btn-icon">🔍</span>
-                <span class="btn-text">FIND TEAMMATES</span>
+                <span class="btn-text" id="findBtnText">WAITING FOR PLAYERS</span>
             </button>
             <p class="action-hint" id="actionHint">
-                Tap to get matched with a Bloodstrike squad instantly.
+                Waiting for another player to come online...
             </p>
         </section>
 
-        <!-- Live Players Counter -->
         <section class="live-counter">
             <div class="counter-dot"></div>
-            <span id="liveCount">0</span> players looking for a team
+            <span id="liveCount">1</span> <span id="counterLabel">active player</span>
         </section>
-
     </main>
 
-    <!-- ========================================== -->
-    <!-- "NO TEAMMATES" MODAL -->
-    <!-- ========================================== -->
     <div class="modal-overlay hidden" id="noTeamModal">
         <div class="modal-card">
             <div class="modal-icon">😔</div>
@@ -66,9 +54,6 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- "SEARCHING" MODAL (When player is in queue) -->
-    <!-- ========================================== -->
     <div class="modal-overlay hidden" id="searchingModal">
         <div class="modal-card">
             <div class="search-spinner"></div>
@@ -79,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK + Lobby Logic -->
     <script type="module" src="lobby.js"></script>
 </body>
 </html>
